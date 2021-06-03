@@ -6,3 +6,20 @@ body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
+
+.info {
+	display: flex;
+	align-items: center;
+}
+
+.status {
+	background: red;
+	border-radius: 100%;
+	height: 16px;
+	width: 16px;
+	margin: 0 0.5rem;
+}
+
+.status.success {
+	background: lawngreen;
+}

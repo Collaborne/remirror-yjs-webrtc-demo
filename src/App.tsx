@@ -12,7 +12,6 @@ function App() {
 			name: getRandomUserName(id),
 		};
 	}, []);
-	console.log('currentUser', currentUser);
 
 	return (
 		<UserProvider.Provider value={currentUser}>
