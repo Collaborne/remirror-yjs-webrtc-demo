@@ -1,5 +1,5 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { RemirrorJSON } from 'remirror';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
+import { RemirrorJSON, areStatesEqual } from 'remirror';
 import {
 	EditorComponent,
 	Remirror,
@@ -8,24 +8,31 @@ import {
 } from '@remirror/react';
 import { YjsExtension } from 'remirror/extensions';
 import { ProsemirrorDevTools } from '@remirror/dev';
-import { useDebounce } from 'use-debounce';
+import { useDebouncedCallback } from 'use-debounce';
 import useCurrentUser from './hooks/useCurrentUser';
 import useWebRtcProvider from './hooks/useWebRtcProvider';
 import useObservableListener from './hooks/useObservableListener';
 import 'remirror/styles/all.css';
 
+interface EditorProps {
+	onFetch: Function;
+	onSave: Function;
+}
+
+const TIMEOUT = 3000 + Math.floor(Math.random() * 7000);
+
 const Status = ({ success = false }) => (
 	<span className={`status ${success ? 'success' : ''}`}>&nbsp;</span>
 );
 
-function App() {
+function Editor({ onFetch, onSave }: EditorProps) {
+	const usedFallbackRef = useRef<boolean>(false);
 	const currentUser = useCurrentUser();
 	const provider = useWebRtcProvider(currentUser);
 
 	const [clientCount, setClientCount] = useState<number>(0);
 	const [isSynced, setIsSynced] = useState<boolean>(false);
 	const [docState, setDocState] = useState<RemirrorJSON>();
-	const [debouncedDocState] = useDebounce(docState, 3000);
 
 	const handleChange = useCallback(
 		({ state, tr }) => {
@@ -36,14 +43,25 @@ function App() {
 		[setDocState],
 	);
 
-	const handlePeers = useCallback(
+	const handleSave = useCallback(
+		newDocState => {
+			onSave(JSON.stringify(newDocState));
+			const meta = provider.doc.getMap('meta');
+			meta.set('lastSaved', Date.now());
+		},
+		[onSave, provider.doc],
+	);
+
+	const handleSaveDebounced = useDebouncedCallback(handleSave, TIMEOUT);
+
+	const handlePeersChange = useCallback(
 		({ webrtcPeers }) => {
 			setClientCount(webrtcPeers.length);
 		},
 		[setClientCount],
 	);
 
-	useObservableListener('peers', handlePeers, provider);
+	useObservableListener('peers', handlePeersChange, provider);
 
 	const handleSynced = useCallback(
 		({ synced }) => {
@@ -55,13 +73,16 @@ function App() {
 	useObservableListener('synced', handleSynced, provider);
 
 	useEffect(() => {
-		const chanceOfSaving = 1 / clientCount;
-		if (isSynced && debouncedDocState && Math.random() < chanceOfSaving) {
-			console.log('Saving', JSON.stringify(debouncedDocState));
-		} else {
-			console.log('Not saving');
+		if (isSynced) {
+			handleSaveDebounced(docState);
 		}
-	}, [isSynced, clientCount, debouncedDocState]);
+	}, [isSynced, docState]);
+
+	const handleYDocUpdate = useCallback(() => {
+		handleSaveDebounced.cancel();
+	}, []);
+
+	useObservableListener('update', handleYDocUpdate, provider.doc);
 
 	const createExtensions = useCallback(() => {
 		return [
@@ -71,9 +92,20 @@ function App() {
 		];
 	}, [provider]);
 
-	const { manager } = useRemirror({
+	const { manager, getContext } = useRemirror({
 		extensions: createExtensions,
 	});
+
+	useEffect(() => {
+		const fetchFallback = async () => {
+			const res = await onFetch();
+			getContext()?.setContent(JSON.parse(res));
+			usedFallbackRef.current = true;
+		};
+		if (!usedFallbackRef.current && provider.connected && clientCount === 0) {
+			fetchFallback();
+		}
+	}, [onFetch, provider.connected, clientCount]);
 
 	return (
 		<ThemeProvider>
@@ -89,4 +121,4 @@ function App() {
 	);
 }
 
-export default App;
+export default Editor;
