@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
-import { RemirrorJSON, areStatesEqual } from 'remirror';
+import { RemirrorJSON } from 'remirror';
 import {
 	EditorComponent,
 	Remirror,
@@ -15,6 +15,7 @@ import useObservableListener from './hooks/useObservableListener';
 import 'remirror/styles/all.css';
 
 interface EditorProps {
+	documentId: string;
 	onFetch: Function;
 	onSave: Function;
 }
@@ -25,10 +26,10 @@ const Status = ({ success = false }) => (
 	<span className={`status ${success ? 'success' : ''}`}>&nbsp;</span>
 );
 
-function Editor({ onFetch, onSave }: EditorProps) {
+function Editor({ documentId, onFetch, onSave }: EditorProps) {
 	const usedFallbackRef = useRef<boolean>(false);
 	const currentUser = useCurrentUser();
-	const provider = useWebRtcProvider(currentUser);
+	const provider = useWebRtcProvider(currentUser, documentId);
 
 	const [clientCount, setClientCount] = useState<number>(0);
 	const [isSynced, setIsSynced] = useState<boolean>(false);
@@ -45,11 +46,13 @@ function Editor({ onFetch, onSave }: EditorProps) {
 
 	const handleSave = useCallback(
 		newDocState => {
-			onSave(JSON.stringify(newDocState));
-			const meta = provider.doc.getMap('meta');
-			meta.set('lastSaved', Date.now());
+			if (isSynced || clientCount === 0) {
+				onSave(documentId, JSON.stringify(newDocState));
+				const meta = provider.doc.getMap('meta');
+				meta.set('lastSaved', Date.now());
+			}
 		},
-		[onSave, provider.doc],
+		[onSave, documentId, provider.doc, isSynced, clientCount],
 	);
 
 	const handleSaveDebounced = useDebouncedCallback(handleSave, TIMEOUT);
@@ -73,14 +76,12 @@ function Editor({ onFetch, onSave }: EditorProps) {
 	useObservableListener('synced', handleSynced, provider);
 
 	useEffect(() => {
-		if (isSynced) {
-			handleSaveDebounced(docState);
-		}
-	}, [isSynced, docState]);
+		handleSaveDebounced(docState);
+	}, [handleSaveDebounced, docState]);
 
 	const handleYDocUpdate = useCallback(() => {
 		handleSaveDebounced.cancel();
-	}, []);
+	}, [handleSaveDebounced]);
 
 	useObservableListener('update', handleYDocUpdate, provider.doc);
 
@@ -97,25 +98,34 @@ function Editor({ onFetch, onSave }: EditorProps) {
 	});
 
 	useEffect(() => {
+		if (usedFallbackRef.current) return;
+
 		const fetchFallback = async () => {
-			const res = await onFetch();
-			getContext()?.setContent(JSON.parse(res));
+			if (provider.connected && clientCount === 0) {
+				const res = await onFetch(documentId);
+				getContext()?.setContent(JSON.parse(res));
+			}
 			usedFallbackRef.current = true;
 		};
-		if (!usedFallbackRef.current && provider.connected && clientCount === 0) {
-			fetchFallback();
-		}
-	}, [onFetch, provider.connected, clientCount]);
+
+		const timeoutId = window.setTimeout(fetchFallback, 1000);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+		};
+	}, [onFetch, documentId, provider.connected, clientCount, getContext]);
 
 	return (
 		<ThemeProvider>
 			<Remirror manager={manager} onChange={handleChange}>
 				<EditorComponent />
 				<ProsemirrorDevTools />
-				<p className="info">
-					Synced: <Status success={isSynced} />
-				</p>
-				<p className="info">Connected clients: {clientCount + 1}</p>
+				<div className="info-box">
+					<p className="info">Connected clients: {clientCount + 1}</p>
+					<p className="info">
+						Synced: <Status success={isSynced || clientCount === 0} />
+					</p>
+				</div>
 			</Remirror>
 		</ThemeProvider>
 	);

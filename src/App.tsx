@@ -23,13 +23,13 @@ function App() {
 		};
 	}, []);
 
-	const handleFetch = useCallback(async () => {
-		const response = await api.get<Document>('documents/1');
+	const handleFetch = useCallback(async id => {
+		const response = await api.get<Document>(`documents/${id}`);
 		return response.data.body;
 	}, []);
 
-	const handleSave = useCallback(async body => {
-		await api.put('/documents/1', {
+	const handleSave = useCallback(async (id, body) => {
+		await api.put(`/documents/${id}`, {
 			body,
 		});
 	}, []);
@@ -37,7 +37,16 @@ function App() {
 	return (
 		<UserProvider.Provider value={currentUser}>
 			<div className="app">
-				<Editor onFetch={handleFetch} onSave={handleSave} />
+				<Editor
+					documentId="e575831a-e213-49e2-9092-a604d3e0f654"
+					onFetch={handleFetch}
+					onSave={handleSave}
+				/>
+				<Editor
+					documentId="b3fa7021-3d36-419c-94e5-277b2014bb70"
+					onFetch={handleFetch}
+					onSave={handleSave}
+				/>
 			</div>
 		</UserProvider.Provider>
 	);
