@@ -8,10 +8,13 @@ import {
 } from '@remirror/react';
 import { YjsExtension } from 'remirror/extensions';
 import { ProsemirrorDevTools } from '@remirror/dev';
+import { Map } from 'yjs';
 import { useDebouncedCallback } from 'use-debounce';
+import { AnnotationExtension, Annotation } from './annotations';
 import useCurrentUser from './hooks/useCurrentUser';
 import useWebRtcProvider from './hooks/useWebRtcProvider';
 import useObservableListener from './hooks/useObservableListener';
+import FloatingAnnotations from './FloatingAnnotations';
 import 'remirror/styles/all.css';
 
 interface EditorProps {
@@ -86,9 +89,13 @@ function Editor({ documentId, onFetch, onSave }: EditorProps) {
 	useObservableListener('update', handleYDocUpdate, provider.doc);
 
 	const createExtensions = useCallback(() => {
+		const annotationsMap: Map<Annotation> = provider.doc.getMap('annotations');
 		return [
 			new YjsExtension({
 				getProvider: () => provider,
+			}),
+			new AnnotationExtension({
+				map: annotationsMap,
 			}),
 		];
 	}, [provider]);
@@ -119,6 +126,7 @@ function Editor({ documentId, onFetch, onSave }: EditorProps) {
 		<ThemeProvider>
 			<Remirror manager={manager} onChange={handleChange}>
 				<EditorComponent />
+				<FloatingAnnotations />
 				<ProsemirrorDevTools />
 				<div className="info-box">
 					<p className="info">Connected clients: {clientCount + 1}</p>
