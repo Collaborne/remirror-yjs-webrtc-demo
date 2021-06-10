@@ -1,27 +1,27 @@
 {
   "files": {
-    "main.css": "/remirror-yjs-webrtc-demo/static/css/main.6928692b.chunk.css",
-    "main.js": "/remirror-yjs-webrtc-demo/static/js/main.903617b2.chunk.js",
-    "main.js.map": "/remirror-yjs-webrtc-demo/static/js/main.903617b2.chunk.js.map",
+    "main.css": "/remirror-yjs-webrtc-demo/static/css/main.a7e5682f.chunk.css",
+    "main.js": "/remirror-yjs-webrtc-demo/static/js/main.168f25b0.chunk.js",
+    "main.js.map": "/remirror-yjs-webrtc-demo/static/js/main.168f25b0.chunk.js.map",
     "runtime-main.js": "/remirror-yjs-webrtc-demo/static/js/runtime-main.2b96dbaa.js",
     "runtime-main.js.map": "/remirror-yjs-webrtc-demo/static/js/runtime-main.2b96dbaa.js.map",
     "static/css/2.a8d1ff3d.chunk.css": "/remirror-yjs-webrtc-demo/static/css/2.a8d1ff3d.chunk.css",
-    "static/js/2.a02150a4.chunk.js": "/remirror-yjs-webrtc-demo/static/js/2.a02150a4.chunk.js",
-    "static/js/2.a02150a4.chunk.js.map": "/remirror-yjs-webrtc-demo/static/js/2.a02150a4.chunk.js.map",
+    "static/js/2.a5c3bb59.chunk.js": "/remirror-yjs-webrtc-demo/static/js/2.a5c3bb59.chunk.js",
+    "static/js/2.a5c3bb59.chunk.js.map": "/remirror-yjs-webrtc-demo/static/js/2.a5c3bb59.chunk.js.map",
     "static/js/3.eef2146d.chunk.js": "/remirror-yjs-webrtc-demo/static/js/3.eef2146d.chunk.js",
     "static/js/3.eef2146d.chunk.js.map": "/remirror-yjs-webrtc-demo/static/js/3.eef2146d.chunk.js.map",
     "static/js/4.b616d6ef.chunk.js": "/remirror-yjs-webrtc-demo/static/js/4.b616d6ef.chunk.js",
     "static/js/4.b616d6ef.chunk.js.map": "/remirror-yjs-webrtc-demo/static/js/4.b616d6ef.chunk.js.map",
     "index.html": "/remirror-yjs-webrtc-demo/index.html",
     "static/css/2.a8d1ff3d.chunk.css.map": "/remirror-yjs-webrtc-demo/static/css/2.a8d1ff3d.chunk.css.map",
-    "static/css/main.6928692b.chunk.css.map": "/remirror-yjs-webrtc-demo/static/css/main.6928692b.chunk.css.map",
-    "static/js/2.a02150a4.chunk.js.LICENSE.txt": "/remirror-yjs-webrtc-demo/static/js/2.a02150a4.chunk.js.LICENSE.txt"
+    "static/css/main.a7e5682f.chunk.css.map": "/remirror-yjs-webrtc-demo/static/css/main.a7e5682f.chunk.css.map",
+    "static/js/2.a5c3bb59.chunk.js.LICENSE.txt": "/remirror-yjs-webrtc-demo/static/js/2.a5c3bb59.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.2b96dbaa.js",
     "static/css/2.a8d1ff3d.chunk.css",
-    "static/js/2.a02150a4.chunk.js",
-    "static/css/main.6928692b.chunk.css",
-    "static/js/main.903617b2.chunk.js"
+    "static/js/2.a5c3bb59.chunk.js",
+    "static/css/main.a7e5682f.chunk.css",
+    "static/js/main.168f25b0.chunk.js"
   ]
 }
