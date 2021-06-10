@@ -31,14 +31,14 @@ export class AnnotationState<Type extends Annotation = Annotation> {
 
 	constructor(
 		private readonly getStyle: GetStyle<Type>,
-		private map: MapLike<OmitText<Type>>,
+		private readonly map: MapLike<string, OmitText<Type>>,
 		private readonly transformPosition: (pos: number) => number,
 		private readonly transformPositionBeforeRender: (
 			pos: number,
 		) => number | null,
 	) {}
 
-	addAnnotation(addAction: AddAnnotationAction<Type>) {
+	addAnnotation(addAction: AddAnnotationAction<Type>): void {
 		const { id } = addAction.annotationData;
 		this.map.set(id, {
 			...addAction.annotationData,
@@ -47,7 +47,7 @@ export class AnnotationState<Type extends Annotation = Annotation> {
 		} as OmitText<Type>);
 	}
 
-	updateAnnotation(updateAction: UpdateAnnotationAction<Type>) {
+	updateAnnotation(updateAction: UpdateAnnotationAction<Type>): void {
 		assert(this.map.has(updateAction.annotationId));
 
 		this.map.set(updateAction.annotationId, {
@@ -56,13 +56,13 @@ export class AnnotationState<Type extends Annotation = Annotation> {
 		} as OmitText<Type>);
 	}
 
-	removeAnnotations(removeAction: RemoveAnnotationsAction) {
+	removeAnnotations(removeAction: RemoveAnnotationsAction): void {
 		removeAction.annotationIds.forEach(id => {
 			this.map.delete(id);
 		});
 	}
 
-	setAnnotations(setAction: SetAnnotationsAction<Type>) {
+	setAnnotations(setAction: SetAnnotationsAction<Type>): void {
 		if (this.map.clear) this.map.clear();
 		// YJS maps don't support clear
 		this.map.forEach(function (_, id, map) {
@@ -75,7 +75,7 @@ export class AnnotationState<Type extends Annotation = Annotation> {
 				...annotation,
 				from: this.transformPosition(from),
 				to: this.transformPosition(to),
-			});
+			} as OmitText<Type>);
 		});
 	}
 

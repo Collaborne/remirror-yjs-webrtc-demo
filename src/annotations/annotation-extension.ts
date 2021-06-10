@@ -48,7 +48,7 @@ function defaultGetStyle<A extends Annotation>(
 	defaultOptions: {
 		getStyle: defaultGetStyle,
 		blockSeparator: undefined,
-		map: new Map(),
+		getMap: () => new Map(),
 		transformPosition: pos => pos,
 		transformPositionBeforeRender: pos => pos,
 	},
@@ -64,7 +64,7 @@ export class AnnotationExtension<
 	protected onSetOptions(props: OnSetOptionsProps<AnnotationOptions<Type>>) {
 		const { pickChanged } = props;
 		const changedPluginOptions = pickChanged([
-			'map',
+			'getMap',
 			'transformPosition',
 			'transformPositionBeforeRender',
 		]);
@@ -81,7 +81,7 @@ export class AnnotationExtension<
 	createPlugin(): CreateExtensionPlugin<AnnotationState<Type>> {
 		const pluginState = new AnnotationState<Type>(
 			this.options.getStyle,
-			this.options.map,
+			this.options.getMap(),
 			this.options.transformPosition,
 			this.options.transformPositionBeforeRender,
 		);

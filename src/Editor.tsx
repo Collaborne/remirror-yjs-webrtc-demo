@@ -7,9 +7,8 @@ import {
 	useRemirror,
 } from '@remirror/react';
 import { ProsemirrorDevTools } from '@remirror/dev';
-import { Map } from 'yjs';
 import { useDebouncedCallback } from 'use-debounce';
-import { AnnotationExtension, Annotation } from './annotations';
+import { AnnotationExtension } from './annotations';
 import { YjsExtension } from './yjs';
 import useCurrentUser from './hooks/useCurrentUser';
 import useWebRtcProvider from './hooks/useWebRtcProvider';

@@ -157,16 +157,16 @@ export class YjsExtension extends PlainExtension<YjsOptions> {
 	onView() {
 		try {
 			this.store.manager.getExtension(AnnotationExtension).setOptions({
-				map: this.provider.doc.getMap('annotations'),
+				getMap: () => this.provider.doc.getMap('annotations'),
 				transformPosition: this.transformPosition.bind(this),
 				transformPositionBeforeRender:
 					this.transformPositionBeforeRender.bind(this),
 			});
 			this.provider.doc.on('update', () => {
-				this.store.commands.redrawAnnotations();
+				this.store.commands.redrawAnnotations?.();
 			});
-		} catch (e) {
-			// console.log(hello)
+		} catch {
+			// AnnotationExtension isn't present in editor
 		}
 	}
 
