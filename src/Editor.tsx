@@ -121,6 +121,7 @@ function Editor({ documentId, onFetch, onSave }: EditorProps) {
 	return (
 		<ThemeProvider>
 			<Remirror manager={manager} onChange={handleChange}>
+				<h3>Remirror with YJS collaborative editing - including annotations</h3>
 				<EditorComponent />
 				<FloatingAnnotations />
 				<ProsemirrorDevTools />
@@ -130,6 +131,7 @@ function Editor({ documentId, onFetch, onSave }: EditorProps) {
 						Synced: <Status success={isSynced || clientCount === 0} />
 					</p>
 				</div>
+				<h3>Current annotations</h3>
 				<AnnotationsJSONPrinter />
 			</Remirror>
 		</ThemeProvider>
