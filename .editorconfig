@@ -1,6 +1,0 @@
-root = true
-
-[*.{json,js,ts,tsx,html,css,less,md,twig,vue}]
-charset = utf-8
-indent_style = tab
-end_of_line = lf
