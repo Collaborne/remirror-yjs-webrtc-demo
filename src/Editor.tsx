@@ -1,5 +1,6 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { RemirrorJSON } from 'remirror';
+import { YjsExtension, AnnotationExtension } from 'remirror/extensions';
 import {
 	EditorComponent,
 	Remirror,
@@ -8,8 +9,6 @@ import {
 } from '@remirror/react';
 import { ProsemirrorDevTools } from '@remirror/dev';
 import { useDebouncedCallback } from 'use-debounce';
-import { AnnotationExtension } from './annotations';
-import { YjsExtension } from './yjs';
 import useCurrentUser from './hooks/useCurrentUser';
 import useWebRtcProvider from './hooks/useWebRtcProvider';
 import useObservableListener from './hooks/useObservableListener';

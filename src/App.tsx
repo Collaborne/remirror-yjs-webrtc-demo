@@ -42,11 +42,6 @@ function App() {
 					onFetch={handleFetch}
 					onSave={handleSave}
 				/>
-				<Editor
-					documentId="b3fa7021-3d36-419c-94e5-277b2014bb70"
-					onFetch={handleFetch}
-					onSave={handleSave}
-				/>
 			</div>
 		</UserProvider.Provider>
 	);
