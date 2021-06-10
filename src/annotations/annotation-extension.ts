@@ -7,6 +7,8 @@ import {
 	getTextSelection,
 	Helper,
 	helper,
+	isEmptyObject,
+	OnSetOptionsProps,
 	PlainExtension,
 	PrimitiveSelection,
 	within,
@@ -47,6 +49,8 @@ function defaultGetStyle<A extends Annotation>(
 		getStyle: defaultGetStyle,
 		blockSeparator: undefined,
 		map: new Map(),
+		transformPosition: pos => pos,
+		transformPositionBeforeRender: pos => pos,
 	},
 	defaultPriority: ExtensionPriority.Low,
 })
@@ -57,15 +61,17 @@ export class AnnotationExtension<
 		return 'annotation' as const;
 	}
 
-	init() {
-		if (!this.options.map.observe) return;
+	protected onSetOptions(props: OnSetOptionsProps<AnnotationOptions<Type>>) {
+		const { pickChanged } = props;
+		const changedPluginOptions = pickChanged([
+			'map',
+			'transformPosition',
+			'transformPositionBeforeRender',
+		]);
 
-		this.options.map.observe(() => {
-			const tr = this.store.getState().tr.setMeta(AnnotationExtension.name, {
-				type: ActionType.REDRAW_ANNOTATIONS,
-			});
-			this.store.view.dispatch(tr);
-		});
+		if (!isEmptyObject(changedPluginOptions)) {
+			this.store.updateExtensionPlugins(this);
+		}
 	}
 
 	/**
@@ -76,6 +82,8 @@ export class AnnotationExtension<
 		const pluginState = new AnnotationState<Type>(
 			this.options.getStyle,
 			this.options.map,
+			this.options.transformPosition,
+			this.options.transformPositionBeforeRender,
 		);
 
 		return {
@@ -233,12 +241,9 @@ export class AnnotationExtension<
 	 */
 	@helper()
 	getAnnotations(): Helper<Type[]> {
-		const annotations: Type[] = [];
-		this.options.map.forEach(annotation => {
-			// Enrich text at annotation
-			annotations.push(this.enrichText(annotation));
-		});
-		return annotations;
+		const state: AnnotationState<Type> = this.getPluginState();
+		// Enrich text at annotation
+		return state.annotations.map(this.enrichText);
 	}
 
 	/**
@@ -253,8 +258,10 @@ export class AnnotationExtension<
 	getAnnotationsAt(pos?: PrimitiveSelection): Helper<Type[]> {
 		const annotations: Type[] = [];
 		const { doc, selection } = this.store.getState();
+		const state: AnnotationState<Type> = this.getPluginState();
 		const { from, to } = getTextSelection(pos ?? selection, doc);
-		this.options.map.forEach(annotation => {
+
+		for (const annotation of state.annotations) {
 			if (
 				within(from, annotation.from, annotation.to) ||
 				within(to, annotation.from, annotation.to) ||
@@ -263,7 +270,7 @@ export class AnnotationExtension<
 			) {
 				annotations.push(this.enrichText(annotation));
 			}
-		});
+		}
 
 		return annotations;
 	}

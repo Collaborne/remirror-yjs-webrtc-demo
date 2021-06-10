@@ -6,15 +6,16 @@ import {
 	ThemeProvider,
 	useRemirror,
 } from '@remirror/react';
-import { YjsExtension } from 'remirror/extensions';
 import { ProsemirrorDevTools } from '@remirror/dev';
 import { Map } from 'yjs';
 import { useDebouncedCallback } from 'use-debounce';
 import { AnnotationExtension, Annotation } from './annotations';
+import { YjsExtension } from './yjs';
 import useCurrentUser from './hooks/useCurrentUser';
 import useWebRtcProvider from './hooks/useWebRtcProvider';
 import useObservableListener from './hooks/useObservableListener';
 import FloatingAnnotations from './FloatingAnnotations';
+import AnnotationsJSONPrinter from './AnnotationsJSONPrinter';
 import 'remirror/styles/all.css';
 
 interface EditorProps {
@@ -89,14 +90,11 @@ function Editor({ documentId, onFetch, onSave }: EditorProps) {
 	useObservableListener('update', handleYDocUpdate, provider.doc);
 
 	const createExtensions = useCallback(() => {
-		const annotationsMap: Map<Annotation> = provider.doc.getMap('annotations');
 		return [
 			new YjsExtension({
 				getProvider: () => provider,
 			}),
-			new AnnotationExtension({
-				map: annotationsMap,
-			}),
+			new AnnotationExtension(),
 		];
 	}, [provider]);
 
@@ -134,6 +132,7 @@ function Editor({ documentId, onFetch, onSave }: EditorProps) {
 						Synced: <Status success={isSynced || clientCount === 0} />
 					</p>
 				</div>
+				<AnnotationsJSONPrinter />
 			</Remirror>
 		</ThemeProvider>
 	);

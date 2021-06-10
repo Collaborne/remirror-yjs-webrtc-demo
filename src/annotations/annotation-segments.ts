@@ -1,6 +1,6 @@
 import { FromToProps, sort } from '@remirror/core';
 
-import type { Annotation, AnnotationMap, OmitText } from './annotation-types';
+import type { Annotation, OmitText } from './annotation-types';
 
 /**
  * Reflects one non-overlapping segment
@@ -33,7 +33,7 @@ interface Item<Type extends Annotation> {
  * https://discuss.prosemirror.net/t/how-to-style-overlapping-inline-decorations/3162
  */
 export function toSegments<A extends Annotation>(
-	annotations: AnnotationMap<OmitText<A>>,
+	annotations: Array<OmitText<A>>,
 ): Array<Segment<A>> {
 	type AnnotationItem = Item<A>;
 	type AnnotationSegment = Segment<A>;
@@ -46,7 +46,7 @@ export function toSegments<A extends Annotation>(
 	const positionMap: Map<number, AnnotationItem[]> = new Map();
 
 	// Build up the index items with the provided annotations.
-	annotations.forEach(annotation => {
+	for (const annotation of annotations) {
 		// Get the already added annotations for the positions provided.
 		const currentFrom = positionMap.get(annotation.from) ?? [];
 		const currentTo = positionMap.get(annotation.to) ?? [];
@@ -56,7 +56,7 @@ export function toSegments<A extends Annotation>(
 			{ type: 'start', annotation },
 		]);
 		positionMap.set(annotation.to, [...currentTo, { type: 'end', annotation }]);
-	});
+	}
 
 	// Sort from the smallest position to the largest position (a-z);
 	const sortedPositions = sort([...positionMap.entries()], ([a], [z]) => a - z);

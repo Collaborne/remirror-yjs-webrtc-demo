@@ -4,17 +4,16 @@ export type GetStyle<Type extends Annotation> = (
 	annotations: Array<OmitText<Type>>,
 ) => string | undefined;
 
-export interface AnnotationMap<V> {
+export interface MapLike<V> {
 	clear?(): void;
 	delete(key: string): any;
 	forEach(
-		callbackfn: (value: V, key: string, map: AnnotationMap<V>) => void,
+		callbackfn: (value: V, key: string, map: MapLike<V>) => void,
 		thisArg?: any,
 	): void;
 	get(key: string): V | undefined;
 	has(key: string): boolean;
 	set(key: string, value: V): any;
-	observe?(callbackfn: () => void): void;
 	readonly size: number;
 }
 
@@ -39,7 +38,11 @@ export interface AnnotationOptions<Type extends Annotation = Annotation> {
 	 */
 	blockSeparator?: AcceptUndefined<string>;
 
-	map?: AnnotationMap<Type>;
+	map?: MapLike<Type>;
+
+	transformPosition?(pos: number): number;
+
+	transformPositionBeforeRender?(pos: number): number | null;
 }
 
 export interface Annotation {
