@@ -2,6 +2,7 @@
 	"name": "remirror-yjs-webrtc-demo",
 	"version": "0.1.0",
 	"private": true,
+	"homepage": "https://collaborne.github.io/remirror-yjs-webrtc-demo",
 	"dependencies": {
 		"@remirror/dev": "0.0.0-pr956.1",
 		"@remirror/pm": "0.0.0-pr956.1",
