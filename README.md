@@ -128,7 +128,7 @@ const { manager } = useRemirror({
     new YjsExtension({
       getProvider: () => new WebrtcProvider('my-room', ydoc)
     }),
-	new AnnotationExtension({
+    new AnnotationExtension({
       getMap: () => ydoc.getMap('annotations')
     })
   ]
