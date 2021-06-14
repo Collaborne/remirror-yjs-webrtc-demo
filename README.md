@@ -2,43 +2,37 @@
 
 ## Motivation
 
-Collaborative editing is editing of documents done by more than one person. It can be performed in real-time or non-real-time.
+Collaborative editing allows more than one person to work on the same document at the same time. Our literature research answered many questions how to implement collaborative editing in a server architecture - but also left us with a couple of unknowns.
 
-We decided non-real-time editing approaches (such as locking a document when somebody else is editing it) provided little value to the user. They also didn't really solve the problem, they just pushed it on to the user.
+This repo contains our proof of concept to address the following unknowns:
 
-We decided we need to investigate the real-time solutions. However, with minimal exposure to real-time collaborative editing there were some unknowns that could only be answered with a spike.
+1. **How do you approach collaborative editing in a _serverless architecture_?**
 
-At Collaborne we use [Remirror](https://github.com/remirror/remirror) for document editing, and our architecture is serverless. We have found these technologies/approaches work well for us, so any collaborative solution should be within these parameters.
+   The traditional approach for collaboration is a centralised server that mediates changes made by concurrent users. In particular, yjs y-websocket requires to run a server with a permanent in-memory model of the document. This obviously conflicts with our goal of a serverless architecture. Centralised approaches also suffer from latency issues, and are a single point of failure.
 
-We decided to create a proof of concept, that would address the following unknowns.
+   If collaborators could connect to each other directly (peer-to-peer) we could remove the need for a server at all.
 
-### 1. How do you approach collaborative editing in a _serverless architecture_?
+2. **How and _when_ to persist document data?**
 
-The traditional approach for collaboration is a centralised server that mediates changes made by concurrent users. This is obviously contrary to our aim. Centralised approaches also suffer from latency issues, and are a single point of failure.
+   Without a central instance (like yjs y-websocket), we're also in charge of persisting the document on which the users collaborate. We could save the entire document to the backend or just the changes that are then merged into the main document.
 
-If collaborators could connect to each other directly (peer-to-peer) we could remove the need for a server at all.
+   We also need to think about _when_ to save - if concurrent users are collaborating on the same document we could end up multiple users trying to save at the same time - leading to an unnecessary spike in traffic, or a conflict when trying to merge changes on the backend.
 
-### 2. How and _when_ to persist document data?
+   There are a variety of approaches to consider, perhaps we could:
 
-In addition to collaborating on a document we also need to save it. We could save the entire document to the backend or just the changes that are then merged into the main document.
+     - Save the entire document, when the last user closes it
+     - Save the entire document, when _any_ user closes it
+     - Save changes regularly, irrespective of whether collaboration is still taking place.
 
-We also need to think about _when_ to save - if concurrent users are collaborating on the same document we could end up multiple users trying to save at the same time - leading to an unnecessary spike in traffic, or a conflict when trying to merge changes on the backend.
+3. **How do we allow multiple documents to be opened in parallel?**
 
-There are a variety of approaches to consider, perhaps we could:
+   Users may be collaborating on multiple documents at any one time, how do we keep track of which edits relate to which document?
 
-a. Save the entire document, when the last user closes it
-b. Save the entire document, when _any_ user closes it
-c. Save changes regularly, irrespective of whether collaboration is still taking place.
+4. **How do we share annotation data, that is additional data structure and not part of the document.**
 
-### 3. How do we allow multiple documents to be opened in parallel?
+   [Annotations](https://github.com/remirror/remirror/tree/beta/packages/remirror__extension-annotation) (or comments) append notes to the main body of document text, however then are not part of the document itself. They should be considered to be a separate data structure of metadata, with references to specific positions in the document where they relate.
 
-Users may be collaborating on multiple documents at any one time, how do we keep track of which edits relate to which document?
-
-### 4. How do we share annotation data, that is additional data structure and not part of the document.
-
-[Annotations](https://github.com/remirror/remirror/tree/beta/packages/remirror__extension-annotation) (or comments) append notes to the main body of document text, however then are not part of the document itself. They should be considered to be a separate data structure of metadata, with references to specific positions in the document where they relate.
-
-Known approaches for collaboration sync the main body of text, but can we collaborate on associated data structures too?
+   Known approaches for collaboration sync the main body of text, but can we collaborate on associated data structures too?
 
 ## Our approach
 
@@ -78,7 +72,7 @@ Remirror provides a Yjs extension, and using a WebRTC [provider](https://github.
 
 ### 1. How do you approach collaborative editing in a _serverless archiecture_?
 
-Earlier we stated a peer-to-peer approach is likely the best way to achieve collaboration without a centralised server. WebRTC provides this framework, it **does** require a centralised signalling server, but public servers are available, so we wouldn't need to provide our own. In addition signalling servers are only required to broker connections, not to mediate changes.
+Earlier we stated a peer-to-peer approach is likely the best way to achieve collaboration without a centralised server. WebRTC provides this framework and it **does** require a centralised signalling server, but public servers are available, so we wouldn't need to provide our own. In addition signalling servers are only required to broker connections, not to mediate changes.
 
 Using the fantastic technologies above, it proved to be rather trivial to set up a basic collaborative editor using WebRTC. Using Remirror's Yjs extension, and a [`y-webrtc` provider](https://github.com/yjs/y-webrtc), I had a working POC in just a few lines of code.
 
