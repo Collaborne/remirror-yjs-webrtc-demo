@@ -267,6 +267,8 @@ onView(): void {
 
 We would appreciate any and all feedback from the community.
 
+Please create [discussions](https://github.com/Collaborne/remirror-yjs-webrtc-demo/discussions) for general talking points, or [issues](https://github.com/Collaborne/remirror-yjs-webrtc-demo/issues) or pull request for bugs.
+
 In particular we would love feedback in the areas below
 
 1. Is the Yjs extension assuming annotations should be shared a step too far? Are there simpler solutions?
