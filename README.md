@@ -8,21 +8,23 @@ This repo contains our proof of concept to address the following unknowns:
 
 1. **How do you approach collaborative editing in a _serverless architecture_?**
 
-   The traditional approach for collaboration is a centralised server that mediates changes made by concurrent users. In particular, yjs y-websocket requires to run a server with a permanent in-memory model of the document. This obviously conflicts with our goal of a serverless architecture. Centralised approaches also suffer from latency issues, and are a single point of failure.
+   The traditional approach for collaboration is a centralised server that mediates changes made by concurrent users. In particular, Yjs `y-websocket` requires to run a server with a permanent in-memory model of the document. This obviously conflicts with our goal of a serverless architecture.
+
+   Centralised approaches also suffer from latency issues, and are a single point of failure.
 
    If collaborators could connect to each other directly (peer-to-peer) we could remove the need for a server at all.
 
 2. **How and _when_ to persist document data?**
 
-   Without a central instance (like yjs y-websocket), we're also in charge of persisting the document on which the users collaborate. We could save the entire document to the backend or just the changes that are then merged into the main document.
+   Without a central instance (like Yjs `y-websocket`), we're also in charge of persisting the document on which the users collaborate. We could save the entire document to the backend or just the changes that are then merged into the main document.
 
    We also need to think about _when_ to save - if concurrent users are collaborating on the same document we could end up multiple users trying to save at the same time - leading to an unnecessary spike in traffic, or a conflict when trying to merge changes on the backend.
 
    There are a variety of approaches to consider, perhaps we could:
 
-     - Save the entire document, when the last user closes it
-     - Save the entire document, when _any_ user closes it
-     - Save changes regularly, irrespective of whether collaboration is still taking place.
+   - Save the document, when the last user closes it
+   - Save the document, when _any_ user closes it
+   - Save changes regularly, irrespective of whether collaboration is still taking place.
 
 3. **How do we allow multiple documents to be opened in parallel?**
 
@@ -30,7 +32,7 @@ This repo contains our proof of concept to address the following unknowns:
 
 4. **How do we share annotation data, that is additional data structure and not part of the document.**
 
-   [Annotations](https://github.com/remirror/remirror/tree/beta/packages/remirror__extension-annotation) (or comments) append notes to the main body of document text, however then are not part of the document itself. They should be considered to be a separate data structure of metadata, with references to specific positions in the document where they relate.
+   [Annotations](https://github.com/remirror/remirror/tree/beta/packages/remirror__extension-annotation) (or comments) append notes to the main body of document text, however they are not part of the document itself. They should be considered to be a separate data structure of metadata, with references to specific positions in the document where they relate.
 
    Known approaches for collaboration sync the main body of text, but can we collaborate on associated data structures too?
 
@@ -70,9 +72,11 @@ Remirror provides a Yjs extension, and using a WebRTC [provider](https://github.
 
 ## Outcomes
 
-### 1. How do you approach collaborative editing in a _serverless archiecture_?
+### 1. How do you approach collaborative editing in a _serverless architecture_?
 
-Earlier we stated a peer-to-peer approach is likely the best way to achieve collaboration without a centralised server. WebRTC provides this framework and it **does** require a centralised signalling server, but public servers are available, so we wouldn't need to provide our own. In addition signalling servers are only required to broker connections, not to mediate changes.
+Earlier we stated a peer-to-peer approach is likely the best way to achieve collaboration without a centralised server. WebRTC provides this framework.
+
+WebRTC **does** require a centralised signalling server, but public servers are available, so we wouldn't need to provide our own. In addition they only broker connections, rather than mediating changes.
 
 Using the fantastic technologies above, it proved to be rather trivial to set up a basic collaborative editor using WebRTC. Using Remirror's Yjs extension, and a [`y-webrtc` provider](https://github.com/yjs/y-webrtc), I had a working POC in just a few lines of code.
 
@@ -103,7 +107,7 @@ return (
 
 Of course this is very bare bones, so tweaking the ["awareness"](https://docs.yjs.dev/api/about-awareness) config makes for a more realistic end user experience.
 
-We decided to use custom hooks to supply the provider, so we can utilise other hooks like `useContext` to obtain user details for the providers awareness config.
+We decided to use custom hooks to supply the provider, so we can utilise other hooks like `useContext` to obtain user details for the providers' awareness config.
 
 ### 2. How and _when_ to persist document data?
 
@@ -111,11 +115,11 @@ Earlier we outlined 3 potential approaches
 
 #### a. Save the entire document, when the last user closes it
 
-This first approach removes the chance of multiple saves occurring simultaneously, however it is risky as the last user could lose internet connection, and all the work done my multiple users could be lost.
+This first approach removes the chance of multiple saves occurring simultaneously, however it is risky as the last user could lose internet connection, and all the work done by multiple users could be lost.
 
 #### b. Save the entire document, when _any_ user closes it
 
-This is a slight improvement on the first, mitigating the last user being the single point of failure. However it may lead to a significant amount of users saving the document at the same time. Imagine users collaborating in a meeting room together, the meeting ends and they all close at the same time.
+This is a slight improvement on the first, mitigating the last user being the single point of failure. However, it may lead to a significant amount of users saving the document at the same time. Imagine users collaborating in a meeting room together, the meeting ends and they all close at the same time.
 
 #### c. Save changes regularly, irrespective of whether collaboration is still taking place.
 
