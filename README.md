@@ -228,16 +228,16 @@ As we require a lot of Yjs internals, this should be handled by the Yjs extensio
 
 <!-- prettier-ignore-start -->
 ```ts
-private transformPosition(pos: number): number {
+private transformPosition(pos: number): RelativePosition {
   const state = this.store.getState();
   const { type, binding } = ySyncPluginKey.getState(state);
   return absolutePositionToRelativePosition(pos, type, binding.mapping);
 }
 
-private transformPositionBeforeRender(pos: number): number | null {
+private transformPositionBeforeRender(relPos: RelativePosition): number | null {
   const state = this.store.getState();
   const { type, binding } = ySyncPluginKey.getState(state);
-  return relativePositionToAbsolutePosition(this.provider.doc, type, pos, binding.mapping);
+  return relativePositionToAbsolutePosition(this.provider.doc, type, relPos, binding.mapping);
 }
 ```
 <!-- prettier-ignore-end -->
