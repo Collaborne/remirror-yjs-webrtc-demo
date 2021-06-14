@@ -1,33 +1,56 @@
 # Remirror Yjs Annotations Demo (via WebRTC)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Motivation
 
-## [Live demo](https://collaborne.github.io/remirror-yjs-webrtc-demo)
+Collaborative editing is editing of documents done by more than one person. It can be performed in real-time or non-real-time.
 
-## Getting started
+We decided non-real-time editing approaches (such as locking a document when somebody else is editing it) provided little value to the user. They also didn't really solve the problem, they just pushed it on to the user.
+
+We decided we need to investigate the real-time solutions. However, with minimal exposure to real-time collaborative editing there were some unknowns that could only be answered with a spike.
+
+At Collaborne we use [Remirror](https://github.com/remirror/remirror) for document editing, and our architecture is serverless. We have found these technologies/approaches work well for us, so any collaborative solution should be within these parameters.
+
+We decided to create a proof of concept, that would address the following unknowns.
+
+### 1. How do you approach collaborative editing in a _serverless architecture_?
+
+The traditional approach for collaboration is a centralised server that mediates changes made by concurrent users. This is obviously contrary to our aim. Centralised approaches also suffer from latency issues, and are a single point of failure.
+
+If collaborators could connect to each other directly (peer-to-peer) we could remove the need for a server at all.
+
+### 2. How and _when_ to persist document data?
+
+In addition to collaborating on a document we also need to save it. We could save the entire document to the backend or just the changes that are then merged into the main document.
+
+We also need to think about _when_ to save - if concurrent users are collaborating on the same document we could end up multiple users trying to save at the same time - leading to an unnecessary spike in traffic, or a conflict when trying to merge changes on the backend.
+
+There are a variety of approaches to consider, perhaps we could:
+
+a. Save the entire document, when the last user closes it
+b. Save the entire document, when _any_ user closes it
+c. Save changes regularly, irrespective of whether collaboration is still taking place.
+
+### 3. How do we allow multiple documents to be opened in parallel?
+
+Users may be collaborating on multiple documents at any one time, how do we keep track of which edits relate to which document?
+
+### 4. How do we share annotation data, that is additional data structure and not part of the document.
+
+[Annotations](https://github.com/remirror/remirror/tree/beta/packages/remirror__extension-annotation) (or comments) append notes to the main body of document text, however then are not part of the document itself. They should be considered to be a separate data structure of metadata, with references to specific positions in the document where they relate.
+
+Known approaches for collaboration sync the main body of text, but can we collaborate on associated data structures too?
+
+## Our approach
+
+### [Live demo](https://collaborne.github.io/remirror-yjs-webrtc-demo)
+
+Or locally
 
 1. `npm install`
 2. `npm start`
 
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-## About this this proof of concept
-
-### Aims
-
-The primary goal is to learn more about collaborative editing in a _serverless architecture_.
-
-Additionally, as [annotations](https://github.com/remirror/remirror/tree/beta/packages/remirror__extension-annotation) are the basis of a key feature in Collaborne's NEXT app, we need to enable collaboration on both text _and_ annotation modifications.
-
-### Background
-
-The traditional approach for collaboration is a centralised server that mediates changes made by concurrent users. This is obviously contrary to our aim. Centralised approaches also suffer from latency issues, and are a single point of failure.
-
-If collaborators could connect to each other directly (peer-to-peer) we could remove the need for a server at all. [WebRTC](https://medium.com/@mindfiresolutions.usa/why-should-every-web-developer-need-to-know-about-webrtc-9d14a3ae513f) provides this framework.
 
 ### Technologies used
 
@@ -49,13 +72,15 @@ Remirror provides a Yjs extension, and using a WebRTC [provider](https://github.
 
 #### WebRTC
 
-WebRTC enables real time communication between browsers directly, a signalling server is required to broker the initial peer-to-peer connections, but serves no other purpose. Furthermore public signalling servers are available, so you don't need to provide your own.
+[WebRTC](https://medium.com/@mindfiresolutions.usa/why-should-every-web-developer-need-to-know-about-webrtc-9d14a3ae513f) enables real time communication between browsers directly, a signalling server is required to broker the initial peer-to-peer connections, but serves no other purpose.
 
-## Approach
+## Outcomes
 
-### Setup
+### 1. How do you approach collaborative editing in a _serverless archiecture_?
 
-Using the fantastic technologies above, it proved to be rather trivial to set up a basic collaborative editor. Using Remirror's Yjs extension, and a [`y-webrtc` provider](https://github.com/yjs/y-webrtc), I had a working POC in just a few lines of code.
+Earlier we stated a peer-to-peer approach is likely the best way to achieve collaboration without a centralised server. WebRTC provides this framework, it **does** require a centralised signalling server, but public servers are available, so we wouldn't need to provide our own. In addition signalling servers are only required to broker connections, not to mediate changes.
+
+Using the fantastic technologies above, it proved to be rather trivial to set up a basic collaborative editor using WebRTC. Using Remirror's Yjs extension, and a [`y-webrtc` provider](https://github.com/yjs/y-webrtc), I had a working POC in just a few lines of code.
 
 <!-- prettier-ignore-start -->
 ```jsx
@@ -71,6 +96,7 @@ const { manager } = useRemirror({
   ]
 });
 
+// N.B. this doesn't seem to work in React's strict mode?
 return (
   <ThemeProvider>
     <Remirror manager={manager} autoRender />
@@ -85,13 +111,43 @@ Of course this is very bare bones, so tweaking the ["awareness"](https://docs.yj
 
 We decided to use custom hooks to supply the provider, so we can utilise other hooks like `useContext` to obtain user details for the providers awareness config.
 
-### Annotations
+### 2. How and _when_ to persist document data?
 
-The setup above works perfectly for nodes and marks, as these are present in a serialised ProseMirror document (the `y-prosemirror` implementation uses a `Y.XMLFragment` as it's shared data type). _Decorations_ however are **not** part of the serialised document, and so are not shared.
+Earlier we outlined 3 potential approaches
 
-Remirror's Annotation extension uses inline decorations to highlight regions of text, so to enable collaboration on these data structure we needed to build our own solution.
+#### a. Save the entire document, when the last user closes it
 
-The Annotation extension provides commands and helpers to modify and obtain annotations data respectively. It uses a plugin that listens to transcactions and takes the appropriate action to update the internal array.
+This first approach removes the chance of multiple saves occurring simultaneously, however it is risky as the last user could lose internet connection, and all the work done my multiple users could be lost.
+
+#### b. Save the entire document, when _any_ user closes it
+
+This is a slight improvement on the first, mitigating the last user being the single point of failure. However it may lead to a significant amount of users saving the document at the same time. Imagine users collaborating in a meeting room together, the meeting ends and they all close at the same time.
+
+#### c. Save changes regularly, irrespective of whether collaboration is still taking place.
+
+This approach is more akin to autosave, this obviously would lead to an increase in backend traffic, as we're saving much more often.
+
+A standard approach to autosave is to trigger a submission of data after a few seconds of inactivity (debounced save).
+
+This debounced save still needs careful consideration, _x_ seconds after the last change, is the same for all users. To combat this, our approach is assign a randomised debounce timeout (anywhere between 3 to 10 seconds) to each user. The user with the lowest timeout will save the document first, upon which they update a meta property on the Y.Doc. This is used to notify the other users **not** to save.
+
+If the user with lowest timeout value disconnects, (or fails to save) the user with the _next_ lowest value will save the document instead.
+
+### 3. How do we allow multiple documents to be opened in parallel?
+
+This turned out to be fairly simple, Yjs has the concept of "Rooms", which fences off the document modifications made within it.
+
+By using a document ID to create a room name, we can have a unique but consistent room name to allow multiple users to edit multiple documents simultaneously.
+
+### 4. How do we share [annotation](https://github.com/remirror/remirror/tree/beta/packages/remirror__extension-annotation) data, that is additional data structure and not part of the document.
+
+The out-of-the-box setup with Remirror's Yjs extension works brilliantly for synchronising document text (consisting of nodes and marks).
+
+These are present in a serialised ProseMirror document (XML or JSON for instance) - the `y-prosemirror` implementation uses a `Y.XMLFragment` as it's shared data type.
+
+_Decorations_ however are **not** part of a serialised ProseMirror document, and so these are _not_ shared. Remirror's Annotation extension uses inline **decorations** to highlight regions of text, so to enable collaboration on these data structures we needed to build our own solution.
+
+The Annotation extension provides commands and helpers to modify and obtain annotations data respectively. It uses a plugin that listens to transactions and takes the appropriate action to update the internal array.
 
 One solution would be to replace this array with a Y.Array instead. However being open source, we need to think beyond our own use cases. Just because you're using the annotation extension, doesn't mean you're also using Yjs, (plus Y.Array has a different API - more on that later). So adding a Yjs dependency to the annotations extension in a no-go.
 
@@ -156,7 +212,7 @@ ydoc.on('update', () => {
 
 If life were oh-so-simple, **I did say we're only halfway there**.
 
-### Relative vs Absolute positions
+#### Relative vs Absolute positions
 
 Stealing from the [Yjs docs](https://docs.yjs.dev/ecosystem/editor-bindings/prosemirror)
 
@@ -209,11 +265,23 @@ onView(): void {
 ```
 <!-- prettier-ignore-end -->
 
-### Persistence
+## Open questions
 
-In addition to collaborating on a document we also need to save it. A standard approach to autosave is to trigger a submission of data after a few seconds of inactivity.
+We would appreciate any and all feedback from the community.
 
-However when multiple users are collaborating on the same document this could lead to multiple users trying to save at the same time - leading to an unnecessary spike in traffic. To combat this, each user is assigned a randomised debounce timeout (between 3-10 seconds). The user with the _lowest_ timeout will save the document first, we then update a meta property on the `Y.Doc`. This is used to notify the other users **_not_** to save.
+In particular we would love feedback in the areas below
+
+1. Is the Yjs extension assuming annotations should be shared a step too far? Are there simpler solutions?
+2. Is the approach to persisting the document sensible?
+3. Does this solution have any blind spots, that mean this would not work in practice, or do you have alternative suggestions?
+
+## Concerns
+
+1. Remirror's Yjs extension doesn't appear to work in React's strict mode. Why?
+2. Remirror places [default options on the extensions' constructor](https://github.com/remirror/remirror/blob/270edd91ba6badf9468721e35fa0ddc6a21c6dd2/packages/remirror__core/src/extension/extension-decorator.ts#L171), this seems problematic?
+   - If you supply an object instance as a default option, it will be used by all instances of an Editor, leading to documents data bleeding in to one-another
+   - The workaround is to use a function that creates a default argument, i.e. `getMap: () => new Map()`
+   - Should default options be provided via a function instead? i.e. `this.getDefaultOptions()`
 
 ## Related pull requests
 
